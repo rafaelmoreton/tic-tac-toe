@@ -13,7 +13,6 @@
 # end
 
 class Table
-    attr_reader :cells
 
     def initialize(match)
         @match = match
@@ -26,9 +25,19 @@ class Table
         end
     end
 
+    def cells
+        @cells
+    end
+
     def display
         puts "\n_#{@cells[6].position}_|_#{@cells[7].position}_|_#{@cells[8].position}_\n_#{@cells[3].position}_|_#{@cells[4].position}_|_#{@cells[5].position}_\n #{@cells[0].position} | #{@cells[1].position} | #{@cells[2].position} "
     end
+
+    def play(target, active_player)
+        target -= 1
+        @cells[target].mark_for(active_player.player_token)
+    end
+
 end
 
 class Cell
@@ -38,14 +47,51 @@ class Cell
         @position = position
     end
 
-    def play(player_token)
-        @position = player_token
+    def mark_for(player)
+        @position = player        
     end
+
 end
 
-match = 1
+class Player
+    attr_reader :player_token
+    
+    @@players_pool = []
+    @@active_player = 0
+
+    def initialize(name)
+        @name = name
+        @play_order = 0
+        @player_token = 0
+        @@players_pool << self
+    end
+
+    def self.players_pool
+        @@players_pool
+    end
+
+    def self.active_player(player)
+        @@active_player = player
+    end
+
+    def choose_token(token)
+        @player_token = token
+    end
+
+end
+
+match = 0
 matches = []
 
-#Game loop
+#Start game
 matches << Table.new(match)
+matches[0].display
+
+name = gets.chomp
+player1 = Player.new(name)
+player1.choose_token("X")
+
+matches[0].play(1, player1)
+matches[0].play(2, player1)
+matches[0].play(3, player1)
 matches[0].display
