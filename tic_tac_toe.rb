@@ -72,9 +72,9 @@ class Player
     @@players_pool = []
     @@active_player = 0
 
-    def initialize(name, player_token)
+    def initialize(name)
         @name = name
-        @player_token = player_token
+        @player_token = 0
         @play_order = 0
         @target = 0
         @@players_pool << self
@@ -88,8 +88,19 @@ class Player
         @@active_player = player
     end
 
-    def choose_token(token)
-        @player_token = token
+    def get_token
+        valid_token = false
+        while valid_token == false
+            input = gets.chomp
+            if input.length > 1
+                puts "#{input} isn't a valid token. Select a one digit token."
+            elsif input.ord <= 32 || (input.ord >= 48 && input.ord <= 57) 
+                puts "#{input} is a number. Therefore it cannot be used as a token."
+            else
+                @player_token = input
+                valid_token = true
+            end
+        end
     end
 
     def get_target(match)
@@ -119,15 +130,15 @@ matches = []
 #New Players
 puts "\n\nWhat's the first player's name?"
 name1 = gets.chomp
+player1 = Player.new(name1)
 puts "\n\nWhat's going to be #{name1}'s token?"
-token1 = gets.chomp
-player1 = Player.new(name1, token1)
+player1.get_token
 
 puts "\n\nWhat's the second player's name?"
 name2 = gets.chomp
+player2 = Player.new(name2)
 puts "\n\nWhat's going to be #{name2}'s token?"
-token2 = gets.chomp
-player2 = Player.new(name2, token2)
+player2.get_token
 
 while true do
     #Start game
