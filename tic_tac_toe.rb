@@ -1,17 +1,3 @@
-# loop
-#OK     quem será o jogador 1
-#OK     quem será o jogador 2
-#OK     [criar tabuleiro]
-#OK   loop 2
-#OK         pedir jogada 1
-#OK         checar condição de vitória (empate se chegar a 9 jogadas)
-#OK         alterar jogador
-#OK     indicar vencedor ou empate
-#OK     apagar tabuleiro
-#OK   iniciar novo jogo?
-#     mudar jogadores ou ordem de jogo?
-# end
-
 class Table
 
     def initialize(match)
@@ -81,7 +67,7 @@ class Cell
 end
 
 class Player
-    attr_reader :player_token, :name
+    attr_reader :player_token, :name, :target
     
     @@players_pool = []
     @@active_player = 0
@@ -90,6 +76,7 @@ class Player
         @name = name
         @player_token = player_token
         @play_order = 0
+        @target = 0
         @@players_pool << self
     end
 
@@ -103,6 +90,20 @@ class Player
 
     def choose_token(token)
         @player_token = token
+    end
+
+    def get_target(match)
+        valid_target = false
+        while valid_target == false
+            original_input = gets.chomp
+            player_input = original_input.to_i
+            if match.cells.any? { |cell| cell.position == player_input}
+                @target = player_input
+                valid_target = true
+            else
+                puts "#{original_input} isn't a valid target. Pick a number from the board."
+            end
+        end
     end
 
     def win
@@ -133,13 +134,14 @@ while true do
     matches << Table.new(match)
     sleep(2)
     puts "\n\nStarting match #{(match+1)}..."
-    sleep(2)
+    sleep(1)
 
     #Players turns (4 rounds and 1 turn)
     4.times do
         puts "\n\nIt's #{player1.name}'s turn."
         matches[match].display
-        matches[match].play(player1, gets.chomp.to_i)
+        player1.get_target(matches[match])
+        matches[match].play(player1, player1.target)
         if matches[match].is_there_a_winner?
             player1.win
             matches[match].display
@@ -148,7 +150,8 @@ while true do
 
         puts "\n\nIt's #{player2.name}'s turn."
         matches[match].display
-        matches[match].play(player2, gets.chomp.to_i)
+        player2.get_target(matches[match])
+        matches[match].play(player2, player2.target)
         if matches[match].is_there_a_winner?
             player2.win
             matches[match].display
@@ -158,10 +161,13 @@ while true do
     if !matches[match].is_there_a_winner?
         puts "\n\nIt's #{player1.name}'s turn."
         matches[match].display
-        matches[match].play(player1, gets.chomp.to_i)
+        player1.get_target(matches[match])
+        matches[match].play(player1, player1.target)
         if matches[match].is_there_a_winner?
             player1.win
             matches[match].display
+        else
+            puts "\n\nGame over. It's draw."
         end
     end
 
