@@ -1,72 +1,103 @@
 # frozen_string_literal: true
 
-# Used to create a instance for each match
+# Table instances are used to initialize each match with it's attributes (two
+# of them being arrays of the Cell and Player instances of the current match)
+# and provide the methods to run the current match.
+# Table class' @matches attribute provides a way to storage and access the
+# current and past matches data.
 class Table
   attr_reader :cells
 
-  @@matches = []
+  class << self
+    attr_accessor :matches
+  end
+  @matches = []
 
-  def initialize(match)
-    @match = match
-    @@matches << self
+  def initialize
     @result = 'undefined'
-    @cells = []
-    9.times do |position|
-      position += 1
-      @cells << Cell.new(position)
+    @cells = []; 9.times { |num| @cells << Cell.new(num + 1) } # + 1 accounts
+    # for the difference between the array positions and the table display
+    @players = []; 2.times { @players << Player.new }
+    @active_player = nil
+    Table.matches << self
+    play
+  end
+
+  def play
+    9.times do
+      next_player
+      display
+      @active_player.choose_target!(self)
+      next unless some_winner?
+
+      @active_player.win
+      display
+      return
     end
+    puts "It's a draw!"
+  end
+
+  def next_player
+    @active_player =
+      if @active_player == @players[0]
+        @players[1]
+      else
+        @players[0]
+      end
+    puts "\n\nIt's #{@active_player.name}'s turn."
   end
 
   def display
-    puts "
-    _#{@cells[6].position}_|_#{@cells[7].position}_|_#{@cells[8].position}_
-    _#{@cells[3].position}_|_#{@cells[4].position}_|_#{@cells[5].position}_
-     #{@cells[0].position} | #{@cells[1].position} | #{@cells[2].position} "
-  end
-
-  def play(active_player, target)
-    target -= 1
-    @cells[target].mark_for(active_player.player_token)
+    puts <<~GRID
+      #{cells[6..8].map { |cell| "_#{cell.position}_" }.join('|')}
+      #{cells[3..5].map { |cell| "_#{cell.position}_" }.join('|')}
+      #{cells[0..2].map { |cell| " #{cell.position} " }.join('|')}
+    GRID
   end
 
   def some_winner?
-    # Rows
-    if cells[0].position == cells[1].position && cells[0].position == cells[2].position
-      true
-    elsif cells[3].position == cells[4].position && cells[3].position == cells[5].position
-      true
-    elsif cells[6].position == cells[7].position && cells[6].position == cells[8].position
-      true
+    [any_row?, any_column?, any_diagonal?].any?(true)
+  end
 
-    # Columns
-    elsif cells[0].position == cells[3].position && cells[0].position == cells[6].position
-      true
-    elsif cells[1].position == cells[4].position && cells[1].position == cells[7].position
-      true
-    elsif cells[2].position == cells[5].position && cells[2].position == cells[8].position
-      true
+  def any_row?
+    return true if
+    [
+      cells[0..2],
+      cells[3..5],
+      cells[6..8]
+    ].any? do |row|
+      row.map(&:position).uniq.length == 1
+    end
+  end
 
-    # Diagonals
-    elsif cells[0].position == cells[4].position && cells[0].position == cells[8].position
-      true
-    elsif cells[2].position == cells[4].position && cells[2].position == cells[6].position
-      true
-    else
-      false
+  def any_column?
+    return true if
+    [
+      [cells[0], cells[3], cells[6]],
+      [cells[1], cells[4], cells[7]],
+      [cells[2], cells[5], cells[8]]
+    ].any? do |column|
+      column.map(&:position).uniq.length == 1
+    end
+  end
+
+  def any_diagonal?
+    return true if
+    [
+      [cells[0], cells[4], cells[8]],
+      [cells[2], cells[4], cells[6]]
+    ].any? do |column|
+      column.map(&:position).uniq.length == 1
     end
   end
 end
 
 # Each instance of Table creates 9 instances of Cell to populate it.
 class Cell
-  attr_reader :position
+  attr_accessor :position
 
   def initialize(position)
     @position = position
-  end
-
-  def mark_for(player)
-    @position = player
   end
 end
 
@@ -74,118 +105,65 @@ end
 class Player
   attr_reader :player_token, :name, :target
 
-  @@players_pool = []
+  class << self
+    attr_accessor :players, :active_player
+  end
+  @players = []
   @active_player = 0
 
-  def initialize(name)
-    @name = name
-    @player_token = 0
-    @play_order = 0
-    @target = 0
-    @@players_pool << self
+  def initialize
+    @name = set_name!
+    @player_token = set_token!
+    @target = nil
+    Player.players << self
   end
 
-  def self.players_pool
-      @@players_pool
+  def set_name!
+    if Player.players.empty?
+      puts "\n\nWhat's the first player's name?"
+    else
+      puts "\n\nWhat's the second player's name?"
+    end
+    gets.chomp
   end
 
-  def self.active_player(player)
-      @@active_player = player
-  end
-
-  def get_token
-      valid_token = false
-      while valid_token == false
-          input = gets.chomp
-          if input.length > 1
-              puts "#{input} isn't a valid token. Select a one digit token."
-          elsif input.ord <= 32 || (input.ord >= 48 && input.ord <= 57) 
-              puts "#{input} is a number. Therefore it cannot be used as a token."
-          else
-              @player_token = input
-              valid_token = true
-          end
+  def set_token!
+    puts "\n\nWhat's going to be #{name}'s token?"
+    loop do
+      input = gets.chomp
+      if input.length > 1
+        puts "'#{input}' isn't a valid token. Select a one digit token."
+      elsif input.ord <= 32 || (input.ord >= 48 && input.ord <= 57)
+        puts "'#{input}' is a number. Therefore it cannot be used as a token."
+      elsif Player.players[0] && Player.players[0].player_token == input
+        puts "#{Player.players[0].name} has already selected the token "\
+        "'#{input}'"
+      else
+        return input
       end
+    end
   end
 
-  def get_target(match)
-      valid_target = false
-      while valid_target == false
-          original_input = gets.chomp
-          player_input = original_input.to_i
-          if match.cells.any? { |cell| cell.position == player_input}
-              @target = player_input
-              valid_target = true
-          else
-              puts "#{original_input} isn't a valid target. Pick a number from the board."
-          end
+  def choose_target!(match)
+    loop do
+      original_input = gets.chomp
+      player_input = original_input.to_i
+      if match.cells.any? { |cell| cell.position == player_input }
+        @target = player_input - 1
+        # ' -1 ' accounts for the difference from the console display to the
+        # cells' position attribute
+        match.cells[target].position = player_token
+        break
+      else
+        puts "#{original_input} isn't a valid target. Pick a number from the"\
+          ' board.'
       end
+    end
   end
 
   def win
-      puts "\n\nGame over. #{name} is the winner!"
+    puts "\n\nGame over. #{name} is the winner!"
   end
-
 end
 
-#Global tracking variables
-match = 0
-matches = []
-
-#New Players
-puts "\n\nWhat's the first player's name?"
-name1 = gets.chomp
-player1 = Player.new(name1)
-puts "\n\nWhat's going to be #{name1}'s token?"
-player1.get_token
-
-puts "\n\nWhat's the second player's name?"
-name2 = gets.chomp
-player2 = Player.new(name2)
-puts "\n\nWhat's going to be #{name2}'s token?"
-player2.get_token
-
-while true do
-  #Start game
-  matches << Table.new(match)
-  sleep(2)
-  puts "\n\nStarting match #{(match+1)}..."
-  sleep(1)
-
-  #Players turns (4 rounds and 1 turn)
-  4.times do
-      puts "\n\nIt's #{player1.name}'s turn."
-      matches[match].display
-      player1.get_target(matches[match])
-      matches[match].play(player1, player1.target)
-      if matches[match].some_winner?
-          player1.win
-          matches[match].display
-          break
-      end
-
-      puts "\n\nIt's #{player2.name}'s turn."
-      matches[match].display
-      player2.get_target(matches[match])
-      matches[match].play(player2, player2.target)
-      if matches[match].some_winner?
-          player2.win
-          matches[match].display
-          break
-      end
-  end
-  if !matches[match].some_winner?
-      puts "\n\nIt's #{player1.name}'s turn."
-      matches[match].display
-      player1.get_target(matches[match])
-      matches[match].play(player1, player1.target)
-      if matches[match].some_winner?
-          player1.win
-          matches[match].display
-      else
-          puts "\n\nGame over. It's draw."
-      end
-  end
-
-  match += 1
-end
+Table.new
