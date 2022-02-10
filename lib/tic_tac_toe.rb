@@ -13,14 +13,13 @@ class Table
   end
   @matches = []
 
-  def initialize
+  def initialize(players)
     @result = 'undefined'
     @cells = []; 9.times { |num| @cells << Cell.new(num + 1) } # + 1 accounts
     # for the difference between the array positions and the table display
-    @players = []; 2.times { @players << Player.new }
+    @players = players
     @active_player = nil
     Table.matches << self
-    play
   end
 
   def play
@@ -165,5 +164,3 @@ class Player
     puts "\n\nGame over. #{name} is the winner!"
   end
 end
-
-Table.new
