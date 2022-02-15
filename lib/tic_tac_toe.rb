@@ -25,15 +25,11 @@ class Table
   def play
     9.times do
       next_player
-      display
-      @active_player.choose_target!(self)
-      next unless some_winner?
-
-      @active_player.win
-      display
-      return
+      target = @active_player.choose_target(self)
+      update_cell(target)
+      return victory if some_winner?
     end
-    puts "It's a draw!"
+    draw
   end
 
   def next_player
@@ -44,6 +40,7 @@ class Table
         @players[0]
       end
     puts "\n\nIt's #{@active_player.name}'s turn."
+    display
   end
 
   def display
@@ -57,6 +54,22 @@ class Table
   def some_winner?
     [any_row?, any_column?, any_diagonal?].any?(true)
   end
+
+  def victory
+    puts "\n#{@active_player.name} is the winner!"
+    display
+  end
+
+  def draw
+    puts "\nIt's a draw!"
+    display
+  end
+
+  def update_cell(target)
+    cells[target].position = @active_player.player_token
+  end
+
+  private
 
   def any_row?
     return true if
@@ -143,24 +156,21 @@ class Player
     end
   end
 
-  def choose_target!(match)
+  def choose_target(match)
     loop do
       original_input = gets.chomp
       player_input = original_input.to_i
       if match.cells.any? { |cell| cell.position == player_input }
-        @target = player_input - 1
+        return player_input - 1
         # ' -1 ' accounts for the difference from the console display to the
         # cells' position attribute
-        match.cells[target].position = player_token
-        break
       else
         puts "#{original_input} isn't a valid target. Pick a number from the"\
           ' board.'
       end
     end
   end
-
-  def win
-    puts "\n\nGame over. #{name} is the winner!"
-  end
 end
+
+# game = Table.new([Player.new, Player.new])
+# game.play
