@@ -69,12 +69,17 @@ describe Table do
   describe '#play' do
     context 'when the game comes to a draw' do
       before do
-        allow(player1).to receive(:choose_target).and_return(1)
-        allow(player2).to receive(:choose_target).and_return(2)
+        allow(player1).to receive(:choose_target).and_return(4, 7, 0, 5, 2)
+        allow(player2).to receive(:choose_target).and_return(6, 1, 8, 3)
         allow(table).to receive(:puts) # to avoid outputing the table display
       end
       it 'check for victory is made 9 times' do
         expect(table).to receive(:some_winner?).exactly(9).times
+        table.play
+      end
+
+      it 'outputs the draw message' do
+        expect(table).to receive(:puts).with("\nIt's a draw!")
         table.play
       end
     end
@@ -83,10 +88,23 @@ describe Table do
       before do
         allow(player1).to receive(:choose_target).and_return(0, 1, 2)
         allow(player2).to receive(:choose_target).and_return(5, 8)
+        allow(table).to receive(:puts)
       end
 
-      it 'check for victory is made 5 times' do
-        expect(table).to receive(:some_winner?).exactly(5).times
+      it 'there is a winner' do
+        table.play
+        result = table.some_winner?
+        expect(result).to be true
+      end
+
+      it 'outputs the win message' do
+        active_player = player1
+        expect(table).to receive(:puts).with("\n#{active_player.name} is the winner!")
+        table.play
+      end
+
+      it 'only iterates through the game loop 5 times' do
+        expect(table).to receive(:display).exactly(6).times # 5 times from #next_player, 1 time from #win
         table.play
       end
     end
