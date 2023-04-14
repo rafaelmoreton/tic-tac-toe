@@ -165,5 +165,3 @@ class Player
     puts "\n\nGame over. #{name} is the winner!"
   end
 end
-
-Table.new
