@@ -1,0 +1,10 @@
+E se invés de IA apenas construíssemos a árvore de TODOS os estados possíveis do tabuleiro? A cada passo do jogo o algorítmo constrói a árvore de possibilidades restantes dali pra frente (ou localiza o estado atual na mesma árvore de todas as possibilidades de jogo) e olhando para os caminhos possíveis escolhe aquele com maior probabilidade de vitória (o nodo que leva ao caminho com mais possibilidades de vitória).
+
+Construir a árvore de possibilidades do tabuleiro
+1. Checar se este é um estado de fim de jogo (não haverão nodos crianças daqui para a frente, encerra a atividade de gerar nodos filhos recursivamente). Se for fim de jogo marcar este nodo folha com o estado que ele dá ao fim do jogo: vitória, derrota ou empate
+2. Conferir uma jogada possível, gerando o nodo dela e refazendo o processo.
+3. Quando chega num nodo folha navegar novamente até o primeiro de tomada de decisão e começara gerar os outros caminhos.
+
+
+
+O computador jogará com ele mesmo ou com um jogador para coletar dados sobre as estratégias mais promissoras
